@@ -1,0 +1,8 @@
+xbox/
+xbox_reduced/
+*.parquet
+*.duckdb
+*.zip
+*.tar.gz
+.ipynb_checkpoints/
+.DS_Store
