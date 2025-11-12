@@ -3,6 +3,8 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 from pathlib import Path
+import matplotlib.dates as mdates
+from matplotlib.ticker import FuncFormatter
 
 #connect 
 db_path = Path("xbox_sample.duckdb")
@@ -260,5 +262,70 @@ plt.legend(
 )
 
 sns.despine(left=True, bottom=True)
+plt.tight_layout()
+plt.show()
+
+history["date_acquired"] = pd.to_datetime(history["date_acquired"])
+
+# Group by month
+monthly = (
+    history.groupby(pd.Grouper(key="date_acquired", freq="M"))["playerid"]
+    .nunique()
+    .reset_index(name="unique_players")
+)
+
+highlight = monthly.iloc[monthly["unique_players"].idxmax()]
+monthly = monthly.sort_values("date_acquired").copy()
+
+# Find peak for annotation
+peak_idx = monthly["unique_players"].idxmax()
+peak = monthly.loc[peak_idx]
+
+# Plot
+plt.figure(figsize=(11, 6))
+ax = plt.gca()
+
+# main line
+ax.plot(
+    monthly["date_acquired"], monthly["unique_players"],
+    lw=2.5, color="black", marker="o", ms=4, alpha=0.9, label="Monthly players"
+)
+
+# highlight peak
+ax.scatter(peak["date_acquired"], peak["unique_players"], s=80, color="#F4A261", zorder=5)
+ax.annotate(
+    f"Peak: {int(peak['unique_players']):,}",
+    xy=(peak["date_acquired"], peak["unique_players"]),
+    xytext=(15, 25),
+    textcoords="offset points",
+    arrowprops=dict(arrowstyle="->", color="#F4A261"),
+    bbox=dict(boxstyle="round,pad=0.3", fc="white", ec="#F4A261", alpha=0.9),
+    color="#F4A261", weight="bold"
+)
+
+# Axis formatting
+ax.set_title("Xbox Player Engagement Over Time", fontsize=18, weight="bold", pad=12)
+ax.set_ylabel("Unique Active Players", fontsize=12)
+
+# y-axis with thousands separators
+ax.yaxis.set_major_formatter(FuncFormatter(lambda v, _: f"{int(v):,}"))
+
+# date tickss
+ax.xaxis.set_major_locator(mdates.YearLocator(base=1))
+ax.xaxis.set_major_formatter(mdates.ConciseDateFormatter(ax.xaxis.get_major_locator()))
+ax.xaxis.set_minor_locator(mdates.MonthLocator(bymonth=[3,6,9,12]))
+
+# subtle grid
+ax.grid(True, axis="y", which="major", alpha=0.25)
+ax.grid(True, axis="y", which="minor", alpha=0.10)
+ax.set_axisbelow(True)
+
+# clean spines
+for spine in ["top", "right"]:
+    ax.spines[spine].set_visible(False)
+
+# legend below the plot
+leg = ax.legend(loc="upper center", bbox_to_anchor=(0.5, -0.12), ncol=2, frameon=False)
+
 plt.tight_layout()
 plt.show()
