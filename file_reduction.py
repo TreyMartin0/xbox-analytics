@@ -57,4 +57,4 @@ for table in ["players_sample", "games", "history_sample",
     con.execute(f"COPY {table} TO '{out_path}' (HEADER, DELIMITER ',');")
     print(f"Saved {table} → {out_path}")
 
-con.close()
+

@@ -1,0 +1,264 @@
+import duckdb
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+from pathlib import Path
+
+#connect 
+db_path = Path("xbox_sample.duckdb")
+con = duckdb.connect(db_path)
+
+#Load data 
+players = pd.read_csv("xbox_reduced/players_sample.csv")
+games = pd.read_csv("xbox_reduced/games.csv")
+history = pd.read_csv("xbox_reduced/history_sample.csv")
+purchases = pd.read_csv("xbox_reduced/purchased_games_sample.csv")
+achievements = pd.read_csv("xbox_reduced/achievements.csv")
+prices = pd.read_csv("xbox_reduced/prices.csv")
+
+#Summary of data
+print("Players:", len(players), players.columns)
+print("Games:", len(games), games.columns)
+print("History:", len(history), history.columns)
+print("Purchases:", len(purchases), purchases.columns)
+print("Achievements:", len(achievements), achievements.columns)
+print("Prices:", len(prices), prices.columns)
+
+#Missing values summary
+print("\nMissing values summary:")
+for name, df in {
+    "players": players, "games": games, "history": history,
+    "purchases": purchases, "achievements": achievements, "prices": prices
+}.items():
+    print(f"{name:15s}  →  {df.isna().sum().sum()} missing")
+
+#Games per publisher
+plt.figure(figsize=(8,4))
+games["publishers"].value_counts().head(10).plot(kind="bar", color="steelblue")
+plt.title("Publishers by Game Count")
+plt.ylabel("Number of Games")
+plt.tight_layout()
+plt.show()
+
+purchases["games_count"] = (
+    purchases["library"]
+    .fillna("")
+    .astype(str)
+    .str.count(r"\d+")
+)
+
+# Genre popularity distribution
+plt.figure(figsize=(10,5))
+sns.countplot(y="genres", data=games, order=games["genres"].value_counts().index[:10])
+plt.title("Top 10 Game Genres on Xbox")
+plt.xlabel("Count")
+plt.ylabel("Genre")
+plt.tight_layout()
+plt.show()
+
+
+# Quick stats about game ownership
+mean_gc = purchases["games_count"].mean()
+median_gc = purchases["games_count"].median()
+p90 = purchases["games_count"].quantile(0.90)
+p99 = purchases["games_count"].quantile(0.99)
+
+all_players = set(players["playerid"])
+players_with_games = set(purchases["playerid"])
+
+# Compute difference
+players_without_games = all_players - players_with_games
+
+print(f"Total players: {len(all_players):,}")
+print(f"Players without any games: {len(players_without_games):,}")
+print(f"Percentage without games: {len(players_without_games) / len(all_players) * 100:.2f}%")
+
+print(f"Players who own a game: {purchases['playerid'].nunique():,}")
+print(f"Avg games/player: {mean_gc:.2f} | Median: {median_gc:.0f} | P90: {p90:.0f} | P99: {p99:.0f}")
+print(f"Max games owned by a player: {purchases['games_count'].max()}")
+
+# (A) Main distribution (handles skew)
+plt.figure(figsize=(8,4))
+sns.histplot(purchases["games_count"], kde=True)
+plt.title("Distribution of Number of Games per Player")
+plt.xlabel("Games Owned")
+plt.ylabel("Players")
+plt.tight_layout()
+plt.show()
+
+# Zoom into the bulk
+clip_cap = int(p99)  # clip to the 99th percentile
+plt.figure(figsize=(8,4))
+sns.histplot(purchases["games_count"].clip(upper=clip_cap), bins=50)
+plt.title(f"Games per Player (clipped at {clip_cap})")
+plt.xlabel("Games Owned (clipped)")
+plt.ylabel("Players")
+plt.tight_layout()
+plt.show()
+
+#Distribution of Achievements Earned per Player
+achievements_per_player = history.groupby("playerid")["achievementid"].nunique().reset_index()
+plt.figure(figsize=(8,4))
+sns.histplot(achievements_per_player["achievementid"], kde=True)
+plt.title("Distribution of Achievements Earned per Player")
+plt.xlabel("Unique Achievements Earned")
+plt.ylabel("Players")
+plt.tight_layout()
+plt.show()
+
+
+player_game = pd.merge(
+    history[["playerid", "achievementid"]],
+    achievements[["achievementid", "gameid"]],
+    on="achievementid",
+    how="left"
+)
+
+# Count unique players per game
+game_popularity = (
+    player_game.groupby("gameid")["playerid"]
+    .nunique()
+    .reset_index(name="num_players")
+)
+
+avg_price = prices.groupby("gameid")["usd"].mean().reset_index()
+
+merged = pd.merge(game_popularity, avg_price, on="gameid", how="inner")
+
+# Create clean labeled bins
+bins = range(0, 101, 10)
+labels = [f"${bins[i]}–{bins[i+1]}" for i in range(len(bins)-1)]
+merged["price_bin"] = pd.cut(
+    merged["usd"],
+    bins=bins,
+    labels=labels,
+    include_lowest=True
+)
+
+# Aggregate
+agg = merged.groupby("price_bin", observed=True)["num_players"].mean().reset_index()
+
+# Plot
+plt.figure(figsize=(8,4))
+sns.barplot(x="price_bin", y="num_players", data=agg, color="cornflowerblue")
+plt.title("Average Game Popularity by Price Range")
+plt.xlabel("Price Range (USD)")
+plt.ylabel("Average Unique Players")
+plt.xticks(rotation=45)
+plt.tight_layout()
+plt.show()
+
+
+player_game = (
+    history.merge(achievements[["achievementid", "gameid"]], on="achievementid", how="left")
+            .merge(games[["gameid", "title"]], on="gameid", how="left")
+)
+
+# Count unique players per game
+popularity = (
+    player_game.groupby(["gameid", "title"])["playerid"]
+    .nunique()
+    .reset_index(name="num_players")
+    .sort_values("num_players", ascending=False)
+)
+
+# Select top 20 most popular
+top20 = popularity.head(20)
+
+# Plot nicely
+plt.figure(figsize=(10,6))
+sns.barplot(y="title", x="num_players", data=top20, color="cornflowerblue")
+plt.title("Top 20 Most Popular Games by Unique Players")
+plt.xlabel("Unique Players")
+plt.ylabel("Game Title")
+plt.tight_layout()
+plt.show()
+
+# top 10 stats
+print(top20.head(10))
+
+
+
+ach_counts = (
+    history.groupby("achievementid")["playerid"]
+    .nunique()
+    .reset_index(name="num_players")
+)
+
+# Merge to get achievement details
+ach_info = pd.merge(
+    ach_counts,
+    achievements[["achievementid", "gameid", "title", "points"]],
+    on="achievementid",
+    how="left"
+)
+
+# Merge again to get the game title
+ach_info = pd.merge(
+    ach_info,
+    games[["gameid", "title"]].rename(columns={"title": "game_title"}),
+    on="gameid",
+    how="left"
+)
+
+# Get top 10
+top10 = ach_info.sort_values("num_players", ascending=False).head(10)
+
+plt.figure(figsize=(10,6))
+sns.set_theme(style="whitegrid")
+
+# Sort by number of players for consistent order
+top10 = top10.sort_values("num_players", ascending=True)
+
+# Use a color palette that transitions by game popularity
+palette = sns.color_palette("Spectral", n_colors=len(top10["game_title"].unique()))
+
+barplot = sns.barplot(
+    x="num_players",
+    y="title",
+    data=top10,
+    hue="game_title",
+    dodge=False,
+    palette=palette,
+    edgecolor="black"
+)
+
+plt.figure(figsize=(10,6))
+sns.set_theme(style="whitegrid")
+
+#top 10 achieved xbox achievements
+top10 = top10.sort_values("num_players", ascending=True)
+palette = sns.color_palette("tab10", n_colors=len(top10["game_title"].unique()))
+
+barplot = sns.barplot(
+    x="num_players",
+    y="title",
+    data=top10,
+    hue="game_title",
+    dodge=False,
+    palette=palette,
+    edgecolor="black"
+)
+
+plt.title("Top 10 Most Achieved Xbox Achievements", fontsize=15, weight="bold", pad=15)
+plt.xlabel("Number of Players Who Achieved", fontsize=12)
+plt.ylabel("Achievement Title", fontsize=12)
+
+# Add labels on bars
+for container in barplot.containers:
+    barplot.bar_label(container, fmt="%d", label_type="edge", padding=3, fontsize=9, color="black")
+
+plt.legend(
+    title="Game Title",
+    title_fontsize=10,
+    fontsize=9,
+    loc="upper center",
+    bbox_to_anchor=(0.5, -0.12), 
+    ncol=3,                  
+    frameon=True,
+    shadow=False
+)
+
+sns.despine(left=True, bottom=True)
+plt.tight_layout()
+plt.show()
