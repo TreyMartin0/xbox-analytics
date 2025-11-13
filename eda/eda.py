@@ -2,9 +2,13 @@ import duckdb
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
+from sklearn.preprocessing import normalize
+import umap
+import ast
 from pathlib import Path
 import matplotlib.dates as mdates
 from matplotlib.ticker import FuncFormatter
+from sklearn.cluster import MiniBatchKMeans
 
 #connect 
 db_path = Path("xbox_sample.duckdb")
@@ -204,7 +208,7 @@ ach_info = pd.merge(
 )
 
 # Get top 10
-top10 = ach_info.sort_values("num_players", ascending=False).head(10)
+top10 = ach_info.sort_values("num_players", ascending=False).dropna(subset=["game_title"]).head(10)
 
 plt.figure(figsize=(10,6))
 sns.set_theme(style="whitegrid")
@@ -329,3 +333,102 @@ leg = ax.legend(loc="upper center", bbox_to_anchor=(0.5, -0.12), ncol=2, frameon
 
 plt.tight_layout()
 plt.show()
+
+RANDOM_STATE= 42
+MIN_OWNERS_PER_GAME = 5 
+N_CLUSTERS = 6 
+N_NEIGHBORS = 20
+MIN_DIST = 0.1 
+
+games["gameid"] = games["gameid"].astype(str)
+
+# Build interaction matrix
+purchases["library"] = purchases["library"].apply(ast.literal_eval)
+
+# explode to (playerid, gameid) rows
+purchases_expanded = purchases.explode("library").rename(columns={"library": "gameid"})
+purchases_expanded["gameid"] = purchases_expanded["gameid"].astype(str)
+
+# filter out ultra-rare games
+owners_per_game = purchases_expanded.groupby("gameid")["playerid"].nunique()
+keep_games = owners_per_game[owners_per_game >= MIN_OWNERS_PER_GAME].index
+purchases_expanded = purchases_expanded[purchases_expanded["gameid"].isin(keep_games)]
+
+# player x game binary matrix
+matrix = pd.crosstab(
+    purchases_expanded["playerid"],
+    purchases_expanded["gameid"]
+)
+
+# L2-normalize rows so whales don't dominate
+matrix_norm = normalize(matrix, norm="l2")  
+
+# UMAP (on games)
+# transpose -> games x players
+reducer = umap.UMAP(
+    n_neighbors=N_NEIGHBORS,
+    min_dist=MIN_DIST,
+    metric="cosine",
+    random_state=RANDOM_STATE
+)
+embedding = reducer.fit_transform(matrix_norm.T)
+
+# dataframe of embedded games
+umap_df = pd.DataFrame(embedding, columns=["x", "y"])
+umap_df["gameid"] = matrix.columns.astype(str)
+
+# attach titles/genres
+umap_df = umap_df.merge(games[["gameid", "title", "genres"]], on="gameid", how="left")
+
+#parse genres into list
+def parse_genres(g):
+    if pd.isna(g): 
+        return []
+    if isinstance(g, str) and g.startswith("["):
+        try:
+            out = ast.literal_eval(g)
+            return [str(s).strip() for s in out]
+        except Exception:
+            pass
+    if isinstance(g, str):
+        return [s.strip() for s in g.replace("|", ",").split(",") if s.strip()]
+    return []
+
+umap_df["genre_list"] = umap_df["genres"].apply(parse_genres)
+
+# CLUSTER IN 2-D
+km = MiniBatchKMeans(n_clusters=N_CLUSTERS, random_state=RANDOM_STATE, batch_size=2048)
+umap_df["cluster"] = km.fit_predict(umap_df[["x", "y"]])
+
+# cluster summary: size, top 3 genres, example titles
+rows = []
+for c, grp in umap_df.groupby("cluster"):
+    all_genres = pd.Series([g for lst in grp["genre_list"] for g in lst])
+    top_genres = ", ".join(all_genres.value_counts().head(3).index.tolist()) or "—"
+    sample_titles = ", ".join(grp["title"].dropna().head(3).tolist())
+    rows.append(dict(cluster=c, n=len(grp), top_genres=top_genres, example_titles=sample_titles))
+cluster_summary = pd.DataFrame(rows).sort_values("n", ascending=False)
+print("\n=== Cluster Summary ===")
+print(cluster_summary.to_string(index=False))
+
+sns.set_context("talk")
+sns.set_style("whitegrid")
+
+# Plot with cluster labels (top genres) at centroids
+centroids = umap_df.groupby("cluster")[["x", "y"]].median().reset_index()
+labels_map = cluster_summary.set_index("cluster")["top_genres"]
+
+plt.figure(figsize=(10, 8))
+sns.scatterplot(
+    data=umap_df, x="x", y="y", hue="cluster",
+    palette=sns.color_palette("tab20", n_colors=N_CLUSTERS), s=14, linewidth=0, alpha=0.7, legend=False
+)
+for _, row in centroids.iterrows():
+    c = int(row["cluster"])
+    txt = f"C{c}: {labels_map.get(c, '—')}"
+    plt.text(row["x"], row["y"], txt, fontsize=9, weight="bold",
+             ha="center", va="center",
+             bbox=dict(boxstyle="round,pad=0.2", fc="white", ec="gray", alpha=0.75))
+plt.title("UMAP with cluster labels (top genres)", weight="bold")
+plt.xlabel("UMAP 1"); plt.ylabel("UMAP 2")
+plt.tight_layout(); plt.show()
