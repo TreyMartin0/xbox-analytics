@@ -1,4 +1,4 @@
-###Strengths and Weaknesses of Baseline###
+### Strengths and Weaknesses of Baseline
 My project so far consists of three recommender models: Random, Collaborative Filtering (CF), and Top-Heuristic (Popularity). 
 I will avoid discussing my random as it is just a sanity check for the latter.
 
@@ -21,7 +21,7 @@ per user. New or rare games are almost invisible to it because they lack histori
 - The features being used are lacking. It is mostly being driven by a label called "liked" which is if a user has completed
 half of a game's total achievements. I am currently missing out on a lot of signal.
 
-###Possible Reasons for Errors and Bias###
+### Possible Reasons for Errors and Bias
 
 **Popularity Bias Toward AAA Titles**
 - Popularity over the last 8 months of the training set favors heavily marketed, widely played games. It overshadows niche,
@@ -40,7 +40,7 @@ few times. This is introducing a systematic bias.
 - Game trends change quickly, so a game that was popular in late 2023 might not be when evaluated or a niche game can blow up.
 This can explain some errors where the model pushes a game that was recently popular but not in the user's future positives.
 
-###Ideas for Final Report###
+### Ideas for Final Report###
 
 **New Features to Add**
 - Richer genre encoding.
@@ -53,7 +53,7 @@ This can explain some errors where the model pushes a game that was recently pop
 - Matrix factorization / implicit feedback models to get latent embeddings for users and games.
 - Hybrid scoring: Combine CF + Top-Heuristic
 
-###RESULTS###
+### RESULTS
 
 === Recommender Comparison (TOP_K = 5) ===
 Users total: 1515 | Evaluated (with ≥1 positive): 600
