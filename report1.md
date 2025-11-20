@@ -60,91 +60,115 @@ Users total: 1515 | Evaluated (with ≥1 positive): 600
 Global positive rate (liked): 0.314
 
 Random recommender:
-  Precision@K: 0.0023
-  Recall@K:    0.0006
-  MAP@K:       0.0010
+- Precision@K: 0.0023
+- Recall@K:    0.0006
+- MAP@K:       0.0010
 
 CollaborativeFiltering recommender:
-  Precision@K: 0.0423
-  Recall@K:    0.0713
-  MAP@K:       0.0610
+- Precision@K: 0.0423
+- Recall@K:    0.0713
+- MAP@K:       0.0610
 
 Popularity recommender:
-  Precision@K: 0.0640
-  Recall@K:    0.0926
-  MAP@K:       0.0571
+- Precision@K: 0.0640
+- Recall@K:    0.0926
+- MAP@K:       0.0571
 
 
---- Sample top-5 recommendations (first 5 evaluated players) ---
+### Sample Top-5 Recommendations (First 5 Evaluated Players)
 
-Player 466055 (GambitOwnsYou):
-  Held-out positives in test:
-    183442 (Assassin's Creed III Remastered), 409706 (Mafia: Definitive Edition), 593425 (A Building Full of Cats)
-  Random               top-5:
-    2054 (Outland), 1474 (Feeding Frenzy 2), 408548 (Golf Zero), 2509 (Unknown title), 10029 (Nightmares from the Deep: The Cursed Heart)
-    hits: 0
-  CollaborativeFiltering top-5:
-    1463 (Dash of Destruction), 8605 (Forza Horizon 2 Presents Fast & Furious), 1746 (Unknown title), 12210 (Quantum Break), 2861 (Mass Effect 3)
-    hits: 0
-  Popularity           top-5:
-    619781 (Lies of P), 592129 (Ravenlok), 590826 (STAR WARS Jedi: Survivor), 10948 (Tom Clancy's Rainbow Six Siege), 570812 (Dead Space)
-    hits: 0
-  Candidate set size: 3081
+#### Player 466055 (*GambitOwnsYou*)
 
-Player 535035 (TheRealAJP5467):
-  Held-out positives in test:
-    13972 (resident evil 4), 414966 (The Medium)
-  Random               top-5:
-    336748 (Stretch Arcade), 2942 (The Walking Dead), 419004 (Call of the Sea), 380139 (Yakuza 0 for Windows 10), 617940 (NBA 2K24)
-    hits: 0
-  CollaborativeFiltering top-5:
-    1237 (Assassin's Creed II), 1225 (Call of Duty: Modern Warfare 2 (2009)), 1199 (Mass Effect 2), 1183 (Batman: Arkham Asylum), 2861 (Mass Effect 3)
-    hits: 0
-  Popularity           top-5:
-    619781 (Lies of P), 514024 (Unknown title), 592129 (Ravenlok), 10948 (Tom Clancy's Rainbow Six Siege), 590826 (STAR WARS Jedi: Survivor)
-    hits: 0
-  Candidate set size: 3493
+- **Held-out positives in test**  
+  - 183442 (*Assassin's Creed III Remastered*)  
+  - 409706 (*Mafia: Definitive Edition*)  
+  - 593425 (*A Building Full of Cats*)
 
-Player 544892 (WarDaddy DC):
-  Held-out positives in test:
-    11501 (ROBLOX), 393815 (Rogue Company)
-  Random               top-5:
-    2764 (Sonic CD), 2379 (Unknown title), 12000 (Shadow Complex Remastered), 17876 (The Golf Club 2), 182655 (Power Rangers: Battle for the Grid)
-    hits: 0
-  CollaborativeFiltering top-5:
-    11501 (ROBLOX), 11683 (Unknown title), 14136 (Unknown title), 10068 (Unknown title), 7808 (MONOPOLY PLUS)
-    hits: 1
-  Popularity           top-5:
-    616624 (Starfield), 619781 (Lies of P), 514024 (Unknown title), 592129 (Ravenlok), 590826 (STAR WARS Jedi: Survivor)
-    hits: 0
-  Candidate set size: 3461
+- **Random – top-5** (hits: 0)  
+  - 2054 (*Outland*), 1474 (*Feeding Frenzy 2*), 408548 (*Golf Zero*), 2509 (*Unknown title*), 10029 (*Nightmares from the Deep: The Cursed Heart*)
 
-Player 582268 (Hungarde):
-  Held-out positives in test:
-    463211 (Forza Horizon 5)
-  Random               top-5:
-    30319 (Far Cry 5), 1045 (Prey (2006)), 465811 (Space Warlord Organ Trading Simulator), 546188 (Despot's Game), 11781 (Raiden V)
-    hits: 0
-  CollaborativeFiltering top-5:
-    1237 (Assassin's Creed II), 10948 (Tom Clancy's Rainbow Six Siege), 11501 (ROBLOX), 14898 (Titanfall 2), 1225 (Call of Duty: Modern Warfare 2 (2009))
-    hits: 0
-  Popularity           top-5:
-    616624 (Starfield), 619781 (Lies of P), 514024 (Unknown title), 592129 (Ravenlok), 590826 (STAR WARS Jedi: Survivor)
-    hits: 0
-  Candidate set size: 3525
+- **CollaborativeFiltering – top-5** (hits: 0)  
+  - 1463 (*Dash of Destruction*), 8605 (*Forza Horizon 2 Presents Fast & Furious*), 1746 (*Unknown title*), 12210 (*Quantum Break*), 2861 (*Mass Effect 3*)
 
-Player 586572 (PxDemaR):
-  Held-out positives in test:
-    9677 (World of Tanks)
-  Random               top-5:
-    1078 (Unknown title), 442878 (Space Jam: A New Legacy - The Game), 159966 (NARUTO TO BORUTO: SHINOBI STRIKER), 6756 (Transformers: Rise of the Dark Spark), 16954 (Late Shift)
-    hits: 0
-  CollaborativeFiltering top-5:
-    11501 (ROBLOX), 11683 (Unknown title), 10948 (Tom Clancy's Rainbow Six Siege), 176537 (Apex Legends), 10068 (Unknown title)
-    hits: 0
-  Popularity           top-5:
-    616624 (Starfield), 619781 (Lies of P), 514024 (Unknown title), 592129 (Ravenlok), 10948 (Tom Clancy's Rainbow Six Siege)
-    hits: 0
-  Candidate set size: 3458
+- **Popularity – top-5** (hits: 0)  
+  - 619781 (*Lies of P*), 592129 (*Ravenlok*), 590826 (*STAR WARS Jedi: Survivor*), 10948 (*Tom Clancy's Rainbow Six Siege*), 570812 (*Dead Space*)
 
-  ![Confusion Matrix of CF](confusion_matrix_cf.png)
+- **Candidate set size**: 3,081
+
+---
+
+#### Player 535035 (*TheRealAJP5467*)
+
+- **Held-out positives in test**  
+  - 13972 (*resident evil 4*)  
+  - 414966 (*The Medium*)
+
+- **Random – top-5** (hits: 0)  
+  - 336748 (*Stretch Arcade*), 2942 (*The Walking Dead*), 419004 (*Call of the Sea*), 380139 (*Yakuza 0 for Windows 10*), 617940 (*NBA 2K24*)
+
+- **CollaborativeFiltering – top-5** (hits: 0)  
+  - 1237 (*Assassin's Creed II*), 1225 (*Call of Duty: Modern Warfare 2 (2009)*), 1199 (*Mass Effect 2*), 1183 (*Batman: Arkham Asylum*), 2861 (*Mass Effect 3*)
+
+- **Popularity – top-5** (hits: 0)  
+  - 619781 (*Lies of P*), 514024 (*Unknown title*), 592129 (*Ravenlok*), 10948 (*Tom Clancy's Rainbow Six Siege*), 590826 (*STAR WARS Jedi: Survivor*)
+
+- **Candidate set size**: 3,493
+
+---
+
+#### Player 544892 (*WarDaddy DC*)
+
+- **Held-out positives in test**  
+  - 11501 (*ROBLOX*)  
+  - 393815 (*Rogue Company*)
+
+- **Random – top-5** (hits: 0)  
+  - 2764 (*Sonic CD*), 2379 (*Unknown title*), 12000 (*Shadow Complex Remastered*), 17876 (*The Golf Club 2*), 182655 (*Power Rangers: Battle for the Grid*)
+
+- **CollaborativeFiltering – top-5** (hits: 1)  
+  - 11501 (*ROBLOX*), 11683 (*Unknown title*), 14136 (*Unknown title*), 10068 (*Unknown title*), 7808 (*MONOPOLY PLUS*)
+
+- **Popularity – top-5** (hits: 0)  
+  - 616624 (*Starfield*), 619781 (*Lies of P*), 514024 (*Unknown title*), 592129 (*Ravenlok*), 590826 (*STAR WARS Jedi: Survivor*)
+
+- **Candidate set size**: 3,461
+
+---
+
+#### Player 582268 (*Hungarde*)
+
+- **Held-out positives in test**  
+  - 463211 (*Forza Horizon 5*)
+
+- **Random – top-5** (hits: 0)  
+  - 30319 (*Far Cry 5*), 1045 (*Prey (2006)*), 465811 (*Space Warlord Organ Trading Simulator*), 546188 (*Despot's Game*), 11781 (*Raiden V*)
+
+- **CollaborativeFiltering – top-5** (hits: 0)  
+  - 1237 (*Assassin's Creed II*), 10948 (*Tom Clancy's Rainbow Six Siege*), 11501 (*ROBLOX*), 14898 (*Titanfall 2*), 1225 (*Call of Duty: Modern Warfare 2 (2009)*)
+
+- **Popularity – top-5** (hits: 0)  
+  - 616624 (*Starfield*), 619781 (*Lies of P*), 514024 (*Unknown title*), 592129 (*Ravenlok*), 590826 (*STAR WARS Jedi: Survivor*)
+
+- **Candidate set size**: 3,525
+
+---
+
+#### Player 586572 (*PxDemaR*)
+
+- **Held-out positives in test**  
+  - 9677 (*World of Tanks*)
+
+- **Random – top-5** (hits: 0)  
+  - 1078 (*Unknown title*), 442878 (*Space Jam: A New Legacy – The Game*), 159966 (*NARUTO TO BORUTO: SHINOBI STRIKER*), 6756 (*Transformers: Rise of the Dark Spark*), 16954 (*Late Shift*)
+
+- **CollaborativeFiltering – top-5** (hits: 0)  
+  - 11501 (*ROBLOX*), 11683 (*Unknown title*), 10948 (*Tom Clancy's Rainbow Six Siege*), 176537 (*Apex Legends*), 10068 (*Unknown title*)
+
+- **Popularity – top-5** (hits: 0)  
+  - 616624 (*Starfield*), 619781 (*Lies of P*), 514024 (*Unknown title*), 592129 (*Ravenlok*), 10948 (*Tom Clancy's Rainbow Six Siege*)
+
+- **Candidate set size**: 3,458
+
+---
+
+![Confusion Matrix of CF](confusion_matrix_cf.png)
