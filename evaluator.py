@@ -1,13 +1,16 @@
 import numpy as np
 import pandas as pd
+import matplotlib.pyplot as plt
+from sklearn.metrics import confusion_matrix
 from models import (
     RandomRecommender,
-    CFRecommender
+    CFRecommender,
+    PopularityRecommender
 )
 from build_data import RecommenderDataPrep, MODEL_FEATURE_COLS, CF_FEATURE_COLS, HYBRID_FEATURE_COLS
 
 # Evaluation configuration
-TOP_K = 3
+TOP_K = 5
 SAMPLE_N = 5
 
 
@@ -140,6 +143,62 @@ def print_sample_recommendations(recommendations, data_prep, eval_users):
         cand = data_prep.candidates_by_ply.get(pid, [])
         print(f"  Candidate set size: {len(cand)}")
 
+def plot_cf_confusion_matrix(data_prep, cf_model, threshold=0.5):
+    """
+    Build a confusion matrix for the CollaborativeFiltering model
+    on the held-out test interactions.
+
+    We treat each (player, game) pair in test_df as a binary
+    classification: liked (1) vs not liked (0), using the CF
+    score as a probability and thresholding at `threshold`.
+    """
+    # Use only rows with valid playerid and gameid
+    test = data_prep.test_df.dropna(subset=["playerid", "gameid"]).copy()
+
+    # Features for CF model (IDs only)
+    X_test = test[CF_FEATURE_COLS].astype(float)
+    y_true = test["liked"].astype(int).values
+
+    # Predicted scores from CF model
+    y_scores = cf_model.predict(X_test)
+
+    # Turn scores into binary predictions
+    y_pred = (y_scores >= threshold).astype(int)
+
+    # Compute confusion matrix
+    cm = confusion_matrix(y_true, y_pred, labels=[0, 1])
+    tn, fp, fn, tp = cm.ravel()
+
+    fig, ax = plt.subplots(figsize=(5, 4))
+    im = ax.imshow(cm, interpolation="nearest", cmap="Blues")
+    ax.set_title("Confusion Matrix – Collaborative Filtering")
+    ax.set_xticks([0, 1])
+    ax.set_xticklabels(["Pred 0 (not liked)", "Pred 1 (liked)"], rotation=25, ha="right")
+    ax.set_yticks([0, 1])
+    ax.set_yticklabels(["True 0", "True 1"])
+
+    # Annotate counts
+    for i in range(cm.shape[0]):
+        for j in range(cm.shape[1]):
+            ax.text(
+                j,
+                i,
+                cm[i, j],
+                ha="center",
+                va="center",
+                color="white" if cm[i, j] > cm.max() * 0.5 else "black",
+            )
+
+    ax.set_xlabel("Predicted label")
+    ax.set_ylabel("True label")
+    fig.colorbar(im, ax=ax)
+    plt.tight_layout()
+    plt.savefig("confusion_matrix_cf.png", dpi=200)
+    # plt.show()  # Uncomment when running locally
+
+    print(cm)
+    print(f"TN={tn}, FP={fp}, FN={fn}, TP={tp}")
+
 
 
 def main():
@@ -151,12 +210,13 @@ def main():
     # Initialize models with default hyperparameters
     # Content-based models (use features)
     content_models = {
-        "Random": (RandomRecommender(), MODEL_FEATURE_COLS)
+        "Random": (RandomRecommender(), MODEL_FEATURE_COLS),
     }
 
     # Collaborative filtering models (only use IDs)
     cf_models = {
-        "CollaborativeFiltering": (CFRecommender(), CF_FEATURE_COLS)
+        "CollaborativeFiltering": (CFRecommender(), CF_FEATURE_COLS),
+        "Popularity" : (PopularityRecommender(popularity_scores=data_prep.popularity_scores), CF_FEATURE_COLS)
     }
 
     # if SURPRISE_AVAILABLE:
@@ -176,6 +236,8 @@ def main():
         X_train, y_train = data_prep.get_training_data(feature_cols)
         model.fit(X_train, y_train)
 
+    cf_model = all_models["CollaborativeFiltering"][0]
+
     # Generate recommendations
     recommendations = {}
     for name, (model, feature_cols) in all_models.items():
@@ -194,6 +256,7 @@ def main():
     # Print results
     print_results(results, data_prep, data_prep.eval_users)
     print_sample_recommendations(recommendations, data_prep, data_prep.eval_users)
+    plot_cf_confusion_matrix(data_prep, cf_model, threshold=0.5)
 
 
 if __name__ == "__main__":
