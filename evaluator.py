@@ -5,7 +5,9 @@ from sklearn.metrics import confusion_matrix
 from models import (
     RandomRecommender,
     CFRecommender,
-    PopularityRecommender
+    PopularityRecommender,
+    HybridRecommender,
+    ContentRecommender
 )
 from build_data import RecommenderDataPrep, MODEL_FEATURE_COLS, CF_FEATURE_COLS, HYBRID_FEATURE_COLS
 
@@ -211,6 +213,7 @@ def main():
     # Content-based models (use features)
     content_models = {
         "Random": (RandomRecommender(), MODEL_FEATURE_COLS),
+        "Content": (ContentRecommender(data_prep), CF_FEATURE_COLS)
     }
 
     # Collaborative filtering models (only use IDs)
@@ -237,6 +240,24 @@ def main():
         model.fit(X_train, y_train)
 
     cf_model = all_models["CollaborativeFiltering"][0]
+    pop_model = all_models["Popularity"][0]
+    content_model = all_models["Content"][0]
+
+    hybrid_model = HybridRecommender(
+        cf_model,
+        pop_model,
+        content_model,
+        alpha_cf=0.6,
+        alpha_pop=0.25,
+        alpha_content=0.15,
+    )
+
+    # Build a new dict that includes hybrid for recommendation & eval
+    all_models = {
+        **all_models,
+        "Hybrid": (hybrid_model, CF_FEATURE_COLS),
+}
+
 
     # Generate recommendations
     recommendations = {}

@@ -5,7 +5,7 @@ from scipy.sparse.linalg import svds
 from .base_rec import BaseRecommender
 
 class CFRecommender(BaseRecommender):
-    DEFAULT_N_COMPONENTS = 3
+    DEFAULT_N_COMPONENTS = 64
     DEFAULT_RANDOM_STATE = 42
 
     def __init__(self, n_components=None, random_state=None):

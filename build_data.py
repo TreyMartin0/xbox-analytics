@@ -12,7 +12,7 @@ FEATURE_COLS_RAW = ["playerid", "gameid", "completed_ratio"]
 MODEL_FEATURE_COLS = ["completed_ratio"]
 CF_FEATURE_COLS = ["playerid", "gameid"]  # For collaborative filtering models
 HYBRID_FEATURE_COLS = ["playerid", "gameid", "completed_ratio"]  # For hybrid models
-TARGET_COL = "liked"
+TARGET_COL = "score"
 LIKE_THRESH = 0.5
 HOLDOUT_POS_PER_USER = 3
 RANDOM_SEED = 42
@@ -66,8 +66,11 @@ class RecommenderDataPrep:
         self.purchased = pd.read_csv(self.purchased)
         self.prices = pd.read_csv(self.prices)
         
-        self.prices['date_acquired'] = pd.to_datetime(self.prices['date_acquired'])
+        #Ensure dates are datetime
+        self.prices["date_acquired"] = pd.to_datetime(self.prices["date_acquired"])
+        self.history["date_acquired"] = pd.to_datetime(self.history["date_acquired"])
         
+        #cleaning
         self.games["primary_genre"] = (self.games["genres"].fillna("").astype(str).str.split(",").str[0].str.strip().replace("", "Unknown"))
 
         # Player IDs
@@ -83,6 +86,7 @@ class RecommenderDataPrep:
 
         self.games["gameid"] = self.games["gameid"].astype("Int64")
 
+        #Core merge
         self.df = pd.merge(self.players, self.history, on= "playerid", how = "left")
         self.df = pd.merge(self.df, self.achievements[['achievementid', 'gameid']], on= "achievementid", how = "left")
         self.df = pd.merge(self.df, self.games[['gameid', 'title', 'genres', 'primary_genre', 'supported_languages']], on= "gameid", how = "left")
@@ -98,6 +102,39 @@ class RecommenderDataPrep:
         self.df = self.df.merge(game_totals, on="gameid", how="left")
         # Ratio
         self.df["completed_ratio"] = self.df["completed"] / self.df["total_ach_count"]
+
+        # Extra signals: recency, velocity
+        max_date = self.df["date_acquired"].max()
+        days_ago = (max_date - self.df["date_acquired"]).dt.days
+        tau = 180.0  # 6-month half-life
+
+        self.df["engagement_weight"] = self.df["completed"] / self.df["total_ach_count"]
+
+        self.df["recency_weight"] = np.exp(-days_ago / tau)
+
+        # Velocity: achievements per hour, per player-game
+        pg_history = self.df.groupby(["playerid", "gameid"])["date_acquired"]
+        first = pg_history.min()
+        last = pg_history.max()
+        achievements = pg_history.count()
+
+        velocity = achievements / ((last - first).dt.total_seconds() / 3600 + 1)
+
+        # bring into df_latest
+        velocity = velocity.reset_index(name="velocity")
+        self.df = self.df.merge(velocity, on=["playerid", "gameid"], how="left")
+
+        # normalize
+        max_vel = self.df["velocity"].max()
+        self.df["velocity_norm"] = (self.df["velocity"] / max_vel).fillna(0)
+
+
+        self.df["score"] = (
+            0.60 * self.df["completed_ratio"]  +   # strongest signal
+            0.30 * self.df["recency_weight"]       +   # freshness signal
+            0.10 * self.df["velocity_norm"]            # intensity signal
+        )
+        self.df["score"] = self.df["score"].fillna(0).clip(0, 1)
         
         # Keep only rows with a real achievement
         df_nonnull = self.df[self.df["achievementid"].notna()].copy()
@@ -204,8 +241,8 @@ class RecommenderDataPrep:
 
     def get_training_data(self, model_feature_cols: list):
         """Get training features and target."""
-        X_train = self.train_df[model_feature_cols].astype(float)
-        y_train = self.train_df[self.target_col].astype(float)
+        X_train = self.train_df[model_feature_cols]
+        y_train = self.train_df[self.target_col]
         return X_train, y_train
 
     def _create_cf_interactions(self, pid, candidates):
