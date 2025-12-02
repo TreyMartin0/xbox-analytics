@@ -200,7 +200,7 @@ class RecommenderDataPrep:
 
         # Popularity score: more players AND higher like rate = higher score.
         # 0.5+0.5*like_rate keeps everything >0 and boosts well-liked games.
-        MIN_RECENT_PLAYERS = 10  # try 3–10; start with 5
+        MIN_RECENT_PLAYERS = 6  # try 3–10; start with 5
         game_stats = game_stats[game_stats["n_players"] >= MIN_RECENT_PLAYERS].copy()
         game_stats["pop_score"] = (0.5 * game_stats["n_players"]) * game_stats["like_rate"]
 

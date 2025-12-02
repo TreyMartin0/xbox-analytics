@@ -14,6 +14,7 @@ from build_data import RecommenderDataPrep, MODEL_FEATURE_COLS, CF_FEATURE_COLS,
 # Evaluation configuration
 TOP_K = 5
 SAMPLE_N = 5
+K_LIST = [1, 3, 5, 8, 10]
 
 
 def precision_at_k(recommended, relevant, k):
@@ -51,6 +52,40 @@ def evaluate_rankings(rec_lists, relevant_sets, k):
         np.mean(r_list),
         np.mean(ap_list),
     )
+
+def compute_pr_curves(rec_lists_by_model, relevant_sets, ks):
+    """
+    rec_lists_by_model: dict[model_name -> dict[playerid -> ranked list of gameids]]
+    relevant_sets: dict[playerid -> set of relevant gameids]
+    ks: list of cutoffs, e.g. [1,3,5,10]
+    """
+    curves = {}
+
+    for model_name, rec_lists in rec_lists_by_model.items():
+        precision_vals = []
+        recall_vals = []
+
+        for k in ks:
+            p_list = []
+            r_list = []
+
+            for pid, recs in rec_lists.items():
+                rel = relevant_sets[pid]
+
+                # reuse your existing helpers
+                p_list.append(precision_at_k(recs, rel, k))
+                r_list.append(recall_at_k(recs, rel, k))
+
+            precision_vals.append(float(np.mean(p_list)))
+            recall_vals.append(float(np.mean(r_list)))
+
+        curves[model_name] = {
+            "k": ks,
+            "precision": precision_vals,
+            "recall": recall_vals,
+        }
+
+    return curves
 
 
 def print_results(results, data_prep, eval_users):
@@ -201,6 +236,66 @@ def plot_cf_confusion_matrix(data_prep, cf_model, threshold=0.5):
     print(cm)
     print(f"TN={tn}, FP={fp}, FN={fn}, TP={tp}")
 
+def plot_precision_recall_by_k(curves, output_path="ranking_curve.png"):
+    """
+    curves: output of compute_pr_curves
+    output_path: file name to save the figure
+    """
+    import matplotlib.pyplot as plt
+
+    ks = None
+    for model_name, data in curves.items():
+        ks = data["k"]
+        break
+
+    fig, ax1 = plt.subplots(figsize=(10, 5))
+
+    # Precision lines
+    for model_name, data in curves.items():
+        ax1.plot(
+            data["k"],
+            data["precision"],
+            marker="o",
+            linestyle="-",
+            label=f"{model_name} – Precision"
+        )
+
+    ax1.set_xlabel("K (top-K recommendations)")
+    ax1.set_ylabel("Precision@K")
+    ax1.set_title("Precision and Recall vs K for Different Recommenders")
+
+    # Second axis for recall
+    ax2 = ax1.twinx()
+    for model_name, data in curves.items():
+        ax2.plot(
+            data["k"],
+            data["recall"],
+            marker="s",
+            linestyle="--",
+            label=f"{model_name} – Recall"
+        )
+
+    ax2.set_ylabel("Recall@K")
+
+    # Build a combined legend
+    lines, labels = ax1.get_legend_handles_labels()
+    lines2, labels2 = ax2.get_legend_handles_labels()
+
+    # Adjust spacing so the plot does not shrink
+    plt.subplots_adjust(right=0.75)  
+    # 0.75 leaves 25% of horizontal space for the legend.
+
+    ax1.legend(
+        lines + lines2,
+        labels + labels2,
+        loc="center left",
+        bbox_to_anchor=(1.2, 0.5),   # slightly outside the axis
+        frameon=True
+    )
+
+    fig.tight_layout()
+    plt.savefig(output_path, dpi=200)
+
 
 
 def main():
@@ -273,6 +368,9 @@ def main():
     for name in all_models.keys():
         p, r, map_score = evaluate_rankings(recommendations[name], data_prep.relevant_by_ply, TOP_K)
         results[name] = {"precision": p, "recall": r, "map": map_score}
+
+    pr_curves = compute_pr_curves(recommendations, data_prep.relevant_by_ply, K_LIST)
+    plot_precision_recall_by_k(pr_curves, output_path="ranking_curve.png")
 
     # Print results
     print_results(results, data_prep, data_prep.eval_users)
