@@ -70,14 +70,19 @@ issues, I filtered to games with >=15 unique players in the training set. This l
 
 ### Modeling Approach
 I evaluated five models:
+
 **1. Random Recommender**
 - Baseline for comparison.
+
 **2. Content-Based Recommender**
 - Uses only per-game behavioral features.
+
 **3. Popularity Recommender**
 - Combines recent player count and like rate.
+
 **4. Collaborative Filtering (CF)**
 - ID-based latent relationship modeling; caputers neighbor similarity.
+
 **5. Hybrid Recommender**
 - Weighted combination of CF (0.6), Popularity (0.25), and Content (0.15). Which was inspired by Netflix-style blending scoring.
 
