@@ -40,7 +40,7 @@ few times. This is introducing a systematic bias.
 - Game trends change quickly, so a game that was popular in late 2023 might not be when evaluated or a niche game can blow up.
 This can explain some errors where the model pushes a game that was recently popular but not in the user's future positives.
 
-### Ideas for Final Report###
+### Ideas for Final Report
 
 **New Features to Add**
 - Richer genre encoding.

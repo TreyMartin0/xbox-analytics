@@ -40,24 +40,31 @@ downsampling was needed due to compute limits. Despite this, it reatins the suff
 In order to produce a per-player-per-game interaction table, I merged historical achievements with metadata and computed three critical
 behavior features. Before constructing engagement features, it is important to understand the underlying distribution of player activity. 
 Achievement counts follow a heavy-tailed pattern, shown below:
+
 ![Distribution of Player Achievements](eda/Graphs/Achievements_per_player.png)
+
 Game ownership shows a similar long-tail shape, highlighting sparsity and reinforcing the need to filter out extremely low-signal titles:
+
 ![Distribution of Game Ownership](eda/Graphs/Distributions_of_games_owned.png)
 
 **Completed Ratio**
-completed_ratio = player's achievements for game / total achievements for game
+
+`completed_ratio = player's achievements for game / total achievements for game`
 The strongest predictor of "liking" a game.
 
 **Recency Weight**
+
 Exponential decay captures time relevance:
-w = e^-d/180
-where d is days since last achievement.
+`w = e^-d/180`
+where `d` is days since last achievement.
 
 **Engagement Velocity**
+
 Achievements per hour between first and last unlock.
 
 There were normalized and combined into a final engagement score:
 score = 0.60r + 0.30w + 0.10v
+
 A game is then labeled "liked" if completed_ratio >= 0.5, forming the positive class used during evaluation. Finally, to avoid sparsity 
 issues, I filtered to games with >=15 unique players in the training set. This left me with 3,535 high-signal games.
 
@@ -83,6 +90,7 @@ Metrics:
 - MAP@5
 
 **Model Comparison**
+
 Random recommender:
 - Precision@5: 0.0023
 - Recall@5:    0.0006
@@ -118,24 +126,27 @@ Distinct clusters emerge, each aligning with genre mixtures:
 ![Embedded UMAP Clusterings](eda/Graphs/Groupings.png)
 
 **Takeaways**
--CF dramatically outperforms random and content models, confirming that player–game interaction patterns are highly structured.
--Popularity alone nearly matches CF in precision, indicating a hit-driven ecosystem.
--Hybrid provides the best overall accuracy, suggesting that blending signals mitigates bias and captures both global and 
+- CF dramatically outperforms random and content models, confirming that player–game interaction patterns are highly structured.
+- Popularity alone nearly matches CF in precision, indicating a hit-driven ecosystem.
+- Hybrid provides the best overall accuracy, suggesting that blending signals mitigates bias and captures both global and 
 personalized structure.
 
 ### Strengths & Challenges
-Strengths:
--Strong latent grouping of games ↔ CF is effective.
--Time-aware scoring captures real engagement.
--Hybrid blending counters sparsity and popularity bias.
+
+**Strengths:**
+- Strong latent grouping of games ↔ CF is effective.
+- Time-aware scoring captures real engagement.
+- Hybrid blending counters sparsity and popularity bias.
 
 Challenges:
--Sparsity: Many niche games have <5 owners, limiting CF utility.
--Genre Imbalance: “Adventure” tag overrepresented, diluting signal.
--Popularity Bias: AAA games dominate interaction volume, inflating like-rate statistics. This imbalance becomes even more clear when 
+
+- Sparsity: Many niche games have <5 owners, limiting CF utility.
+- Genre Imbalance: “Adventure” tag overrepresented, diluting signal.
+- Popularity Bias: AAA games dominate interaction volume, inflating like-rate statistics. This imbalance becomes even more clear when 
 looking at the top 20 most-played titles, nearly all of which are AAA franchises:
 ![Top 20 Most Played Games](eda/Graphs/Top20Games.png)
--Cold Start Games: Without achievements or ownership, only metadata can help.
+
+- Cold Start Games: Without achievements or ownership, only metadata can help.
 
 ### Conclusion
 The results show that Xbox engagement data captures strong behavioral patterns that can be modeled reliably. Collaborative filtering 
