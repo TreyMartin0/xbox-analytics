@@ -40,9 +40,9 @@ downsampling was needed due to compute limits. Despite this, it reatins the suff
 In order to produce a per-player-per-game interaction table, I merged historical achievements with metadata and computed three critical
 behavior features. Before constructing engagement features, it is important to understand the underlying distribution of player activity. 
 Achievement counts follow a heavy-tailed pattern, shown below:
-![Distribution of Player Achievements](Graphs/Achievements_per_player.png)
+![Distribution of Player Achievements](eda/Graphs/Achievements_per_player.png)
 Game ownership shows a similar long-tail shape, highlighting sparsity and reinforcing the need to filter out extremely low-signal titles:
-![Distribution of Game Ownership](Graphs/Distributions_of_games_owned.png)
+![Distribution of Game Ownership](eda/Graphs/Distributions_of_games_owned.png)
 
 **Completed Ratio**
 completed_ratio = player's achievements for game / total achievements for game
@@ -115,7 +115,7 @@ at small K but plateaus, showing the benefit of combining it with CF and content
 
 To validate whether meaningful latent structure exists in the player–game space, I computed a UMAP embedding of game-level interactions. 
 Distinct clusters emerge, each aligning with genre mixtures:
-![Embedded UMAP Clusterings](Graphs/Groupings.png)
+![Embedded UMAP Clusterings](eda/Graphs/Groupings.png)
 
 **Takeaways**
 -CF dramatically outperforms random and content models, confirming that player–game interaction patterns are highly structured.
@@ -134,7 +134,7 @@ Challenges:
 -Genre Imbalance: “Adventure” tag overrepresented, diluting signal.
 -Popularity Bias: AAA games dominate interaction volume, inflating like-rate statistics. This imbalance becomes even more clear when 
 looking at the top 20 most-played titles, nearly all of which are AAA franchises:
-![Top 20 Most Played Games](Graphs/Top20Games.png)
+![Top 20 Most Played Games](eda/Graphs/Top20Games.png)
 -Cold Start Games: Without achievements or ownership, only metadata can help.
 
 ### Conclusion
