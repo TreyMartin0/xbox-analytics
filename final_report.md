@@ -81,7 +81,7 @@ I evaluated five models:
 - Combines recent player count and like rate.
 
 **4. Collaborative Filtering (CF)**
-- ID-based latent relationship modeling; caputers neighbor similarity.
+- ID-based latent relationship modeling (playerid, gameid); caputers neighbor similarity.
 
 **5. Hybrid Recommender**
 - Weighted combination of CF (0.6), Popularity (0.25), and Content (0.15). Which was inspired by Netflix-style blending scoring.
