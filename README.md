@@ -44,7 +44,8 @@ Inside `eda/`:
 - Distribution of games owned  
 - Temporal engagement trends  
 - UMAP cluster embeddings  
-- Genre frequency summaries  
+- Genre frequency summaries
+- And Other Graphs
 
 ---
 
